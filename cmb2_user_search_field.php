@@ -22,12 +22,14 @@ function cmb2_user_search_render_field( $field, $escaped_value, $object_id, $obj
 	    'autocomplete' => 'off',
 	    'style' => 'display:none'
 	) );
-	echo '<ul style="cursor:move">';
+	echo '<ul style="cursor:move; ">';
 	if ( !empty( $field->escaped_value ) ) {
 		$list = explode( ',', $field->escaped_value );
 		foreach ( $list as $value ) {
 			$user = get_user_by( 'id', $value );
 			$name = $user->display_name ? $user->display_name : $user->user_login;
+			$mail = $user->user_email;
+	    	if (function_exists('get_avatar')) { echo get_avatar( $mail, '80' );}
 			echo '<li data-id="' . trim( $value ) . '"><b>' . __( 'Name' ) . ':</b> ' . $name;
 			echo '<div title="' . __( 'Remove' ) . '" style="color: #999;margin: -0.1em 0 0 2px; cursor: pointer;" class="cmb-user-search-remove dashicons dashicons-no"></div>';
 			echo '</li>';
@@ -63,8 +65,14 @@ function cmb2_user_search_render_field( $field, $escaped_value, $object_id, $obj
 	          var l10n = {
 	            'error': '<?php echo esc_js( $error ); ?>',
 	            'find': '<?php echo esc_js( $find ) ?>'
-	          };
+	          }
 
+	          var $elm = $('.cmb-type-user-search-text.cmb2-id-<?php echo str_replace( '_', '-', sanitize_html_class( $field->args( 'id' ) ) ) ?>');
+	          if ($elm.parents('[data-iterator]').length > 0) {
+	          	$elm = $('.cmb-type-user-search-text.cmb2-id-<?php echo str_replace( '_', '-', sanitize_html_class( $field->args( 'id' ) ) ) ?>');
+	          	var idx = $elm.parents('[data-iterator]').index();
+	          	$elm = $('[data-iterator = '+ idx +'] .cmb-type-user-search-text.cmb2-id-<?php echo str_replace( '_', '-', sanitize_html_class( $field->args( 'id' ) ) ) ?>');
+	          }
 	          var UserSearchView<?php echo str_replace( '-', '_', $field->args( 'id' ) ) ?> = window.Backbone.View.extend({
 	            el: '#find-users',
 	            overlaySet: false,
@@ -103,7 +111,6 @@ function cmb2_user_search_render_field( $field, $escaped_value, $object_id, $obj
 	              this.$el.show();
 
 	              this.$input.focus();
-
 	              if (!this.$overlay.length) {
 	                $('body').append('<div id="find-users-ui-find-overlay" class="ui-find-overlay"></div>');
 	                this.$overlay = $('#find-users-ui-find-overlay');
@@ -192,13 +199,13 @@ function cmb2_user_search_render_field( $field, $escaped_value, $object_id, $obj
 	                ids = newids.split(',');
 	                $.each(ids, function (index, value) {
 	                  var cleaned = value.trim().toString();
-	                  if ($('.cmb-type-user-search-text.cmb2-id-<?php echo str_replace( '_', '-', sanitize_html_class( $field->args( 'id' ) ) ) ?> ul li[data-id="' + cleaned + '"]').length === 0) {
-	                    $('.cmb-type-user-search-text.cmb2-id-<?php echo str_replace( '_', '-', sanitize_html_class( $field->args( 'id' ) ) ) ?> ul').append('<li data-id="' + cleaned + '"><b><?php _e( 'Title' ) ?>:</b> ' + labels[index] + '<div title="<?php _e( 'Remove' ) ?>" style="color: #999;margin: -0.1em 0 0 2px; cursor: pointer;" class="cmb-user-search-remove dashicons dashicons-no"></div></li>');
+	                  if ($elm.find('ul li[data-id="' + cleaned + '"]').length === 0) {
+	                    $elm.find('ul').append('<li data-id="' + cleaned + '"><b><?php _e( 'Title' ) ?>:</b> ' + labels[index] + '<div title="<?php _e( 'Remove' ) ?>" style="color: #999;margin: -0.1em 0 0 2px; cursor: pointer;" class="cmb-user-search-remove dashicons dashicons-no"></div></li>');
 	                  }
 	                });
 	              } else {
-	                if ($('.cmb-type-user-search-text.cmb2-id-<?php echo str_replace( '_', '-', sanitize_html_class( $field->args( 'id' ) ) ) ?> ul li[data-id="' + newids + '"]').length === 0) {
-	                  $('.cmb-type-user-search-text.cmb2-id-<?php echo str_replace( '_', '-', sanitize_html_class( $field->args( 'id' ) ) ) ?> ul').append('<li data-id="' + newids + '"><b><?php _e( 'Name' ) ?>:</b> ' + this.$checkedLabel[0] + '<div title="<?php _e( 'Remove' ) ?>" style="color: #999;margin: -0.1em 0 0 2px; cursor: pointer;" class="cmb-user-search-remove dashicons dashicons-no"></div></li>');
+	                if ($elm.find('ul li[data-id="' + newids + '"]').length === 0) {
+	                  $elm.find('ul').append('<li data-id="' + newids + '"><b><?php _e( 'Name' ) ?>:</b> ' + this.$checkedLabel[0] + '<div title="<?php _e( 'Remove' ) ?>" style="color: #999;margin: -0.1em 0 0 2px; cursor: pointer;" class="cmb-user-search-remove dashicons dashicons-no"></div></li>');
 	                }
 	              }
 
@@ -208,10 +215,11 @@ function cmb2_user_search_render_field( $field, $escaped_value, $object_id, $obj
 	          });
 
 	          window.cmb2_user_search<?php echo str_replace( '-', '_', $field->args( 'id' ) ) ?> = new UserSearchView<?php echo str_replace( '-', '_', $field->args( 'id' ) ) ?>();
+	          if (! $elm.find('.dashicons').length) {
+	          	$elm.find('label').after('<div title="' + l10n.find + '" style="position:relative;left:30%;color: #999;cursor: pointer;" class="dashicons dashicons-search"></div>');
+	          }
 
-	          $('.cmb-type-user-search-text.cmb2-id-<?php echo str_replace( '_', '-', sanitize_html_class( $field->args( 'id' ) ) ) ?> .cmb-th label').after('<div title="' + l10n.find + '" style="position:relative;left:30%;color: #999;cursor: pointer;" class="dashicons dashicons-search"></div>');
-
-	          $('.cmb-type-user-search-text.cmb2-id-<?php echo str_replace( '_', '-', sanitize_html_class( $field->args( 'id' ) ) ) ?> .cmb-th .dashicons-search').on('click', openSearch);
+	          $elm.find('.dashicons-search').on('click', openSearch);
 
 	          function openSearch(evt) {
 	            var search = window.cmb2_user_search<?php echo str_replace( '-', '_', $field->args( 'id' ) ) ?>;
@@ -222,8 +230,8 @@ function cmb2_user_search_render_field( $field, $escaped_value, $object_id, $obj
 	            search.trigger('open');
 	          }
 
-	          $('.cmb-type-user-search-text.cmb2-id-<?php echo str_replace( '_', '-', sanitize_html_class( $field->args( 'id' ) ) ) ?>').on('click', '.cmb-user-search-remove', function () {
-	            var ids = $('.cmb-type-user-search-text.cmb2-id-<?php echo str_replace( '_', '-', sanitize_html_class( $field->args( 'id' ) ) ) ?>').find('.cmb-td input[type="text"]').val();
+	          $elm.on('click', '.cmb-user-search-remove', function () {
+	            var ids = $elm.find('.cmb-td input[type="text"]').val();
 	            var $choosen = $(this);
 	            if (ids.indexOf(',') !== -1) {
 	              ids = ids.split(',');
@@ -235,10 +243,10 @@ function cmb2_user_search_render_field( $field, $escaped_value, $object_id, $obj
 	                  ids.splice(index, 1);
 	                }
 	              });
-	              $('.cmb-type-user-search-text.cmb2-id-<?php echo str_replace( '_', '-', sanitize_html_class( $field->args( 'id' ) ) ) ?>').find('.cmb-td input[type="text"]').val(ids.join(','));
+	              $elm.find('.cmb-td input[type="text"]').val(ids.join(','));
 	            } else {
 	              $choosen.parent().remove();
-	              $('.cmb-type-user-search-text.cmb2-id-<?php echo str_replace( '_', '-', sanitize_html_class( $field->args( 'id' ) ) ) ?>').find('.cmb-td input[type="text"]').val('');
+	              $elm.find('.cmb-td input[type="text"]').val('');
 	            }
 	          });
 
@@ -248,7 +256,7 @@ function cmb2_user_search_render_field( $field, $escaped_value, $object_id, $obj
 	              $('.cmb-type-user-search-text.cmb2-id-<?php echo str_replace( '_', '-', sanitize_html_class( $field->args( 'id' ) ) ) ?> ul li').each(function (index, value) {
 	                ids.push($(this).data('id'));
 	              });
-	              $('.cmb-type-user-search-text.cmb2-id-<?php echo str_replace( '_', '-', sanitize_html_class( $field->args( 'id' ) ) ) ?>').find('.cmb-td input[type="text"]').val(ids.join(', '));
+	              $elm.find('.cmb-td input[type="text"]').val(ids.join(', '));
 	            }
 	          });
 
