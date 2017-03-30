@@ -1,0 +1,12 @@
+{
+    "name": "spencerm/CMB2-User-Search-field",
+    "description": "User search field",
+    "type": "wordpress-plugin",
+    "keywords": ["wordpress", "plugin"],
+    "homepage": "https://github.com/spencerm/CMB2-User-Search-field/",
+    "authors": [
+        {
+            "homepage": "https://github.com/spencerm/CMB2-User-Search-field/"
+        }
+    ]
+}
